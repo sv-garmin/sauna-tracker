@@ -1,4 +1,4 @@
-# Sauna — Garmin Connect IQ activity tracker
+# Sauna Tracker — Garmin Connect IQ activity tracker
 
 Version history is in [CHANGELOG.md](CHANGELOG.md).
 

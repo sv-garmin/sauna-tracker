@@ -71,11 +71,6 @@ If you'd rather do it by hand: `./build.sh fenix6s` then
 The app appears in the watch's **activity list** (press START from the watch
 face). Updating is the same `./install.sh` — it just overwrites `SAUNA.PRG`.
 
-> ⚠️ The `developer_key` is the cryptographic identity tied to your apps in
-> the Connect IQ Store. It's `.gitignore`'d so it isn't tracked by git —
-> **keep a backup somewhere safe**: losing it means you can't publish updates
-> to your apps in the store.
-
 ## Project layout
 
 ```

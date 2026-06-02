@@ -14,8 +14,8 @@ All notable changes to this project are documented here. The format follows
 ### Internal
 - GitHub Actions CI workflow builds the store `.iq` on every push/PR and,
   on a `v*` tag push, creates a draft release with the `.iq` attached.
-  The Connect IQ SDK is fetched from a private `sv-garmin/toolbox`
-  release, so no Garmin credentials live in CI secrets.
+  The Connect IQ SDK is fetched at runtime from Garmin's public CDN, so
+  the only secret CI needs is `GARMIN_DEV_KEY_BASE64`.
 - All workflow actions pinned to commit SHAs.
 - Dependabot keeps the pinned action SHAs current (weekly, 7-day cooldown).
 

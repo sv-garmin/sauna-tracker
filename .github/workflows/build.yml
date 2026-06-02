@@ -11,12 +11,10 @@ permissions:
   contents: write
 
 env:
+  # The SDK is fetched directly from Garmin's public CDN. To bump it:
+  # find the new build identifier (e.g. via the SDK Manager) and update both.
   SDK_VERSION: '9.1.0'
-  # Private repo hosting the Connect IQ SDK. The release tag below must
-  # exist there with the Linux SDK attached as a release asset whose name
-  # matches the pattern in the download step.
-  TOOLBOX_REPO: 'sv-garmin/toolbox'
-  TOOLBOX_TAG: 'sdk-9.1.0'
+  SDK_BUILD: '2026-03-09-6a872a80b'
 
 jobs:
   build:
@@ -37,22 +35,15 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/connectiq-sdk
-          key: connectiq-sdk-${{ env.SDK_VERSION }}-linux
+          key: connectiq-sdk-${{ env.SDK_VERSION }}-${{ env.SDK_BUILD }}-linux
 
-      - name: Download Connect IQ SDK from toolbox
+      - name: Download Connect IQ SDK
         if: steps.sdk-cache.outputs.cache-hit != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.TOOLBOX_TOKEN }}
         run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "::error::Missing secret TOOLBOX_TOKEN (fine-grained PAT with Contents:Read on ${TOOLBOX_REPO})"
-            exit 1
-          fi
           mkdir -p ~/connectiq-sdk
-          gh release download "$TOOLBOX_TAG" \
-            --repo "$TOOLBOX_REPO" \
-            --pattern 'connectiq-sdk-lin-*.zip' \
-            --output /tmp/sdk.zip
+          curl -fsSL \
+            "https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-${SDK_VERSION}-${SDK_BUILD}.zip" \
+            -o /tmp/sdk.zip
           unzip -q /tmp/sdk.zip -d ~/connectiq-sdk
           rm /tmp/sdk.zip
 

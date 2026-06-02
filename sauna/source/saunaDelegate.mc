@@ -4,7 +4,7 @@ import Toybox.WatchUi;
 // Button handling (Fenix / Epix layout):
 //   START (top-right)    -> start; while active, pause and open the finish menu
 //   BACK  (bottom-right) -> switch phase while recording; resume from pause; exit when idle
-//   MENU  (long-press)   -> open the finish menu
+//   MENU  (long-press)   -> open the finish menu while recording, or Settings when idle
 class saunaDelegate extends WatchUi.BehaviorDelegate {
     private var _activity as SaunaActivity;
 
@@ -42,9 +42,10 @@ class saunaDelegate extends WatchUi.BehaviorDelegate {
     public function onMenu() as Boolean {
         if (_activity.isActive()) {
             openFinishMenu();
-            return true;
+        } else {
+            openSettingsMenu();
         }
-        return false;
+        return true;
     }
 
     private function openFinishMenu() as Void {
@@ -56,5 +57,13 @@ class saunaDelegate extends WatchUi.BehaviorDelegate {
         menu.addItem(new WatchUi.MenuItem("Save", "to Garmin Connect", :save, null));
         menu.addItem(new WatchUi.MenuItem("Discard", null, :discard, null));
         WatchUi.pushView(menu, new StopMenuDelegate(_activity), WatchUi.SLIDE_UP);
+    }
+
+    private function openSettingsMenu() as Void {
+        var title = WatchUi.loadResource(Rez.Strings.SettingsTitle) as String;
+        var about = WatchUi.loadResource(Rez.Strings.AboutItem) as String;
+        var menu = new WatchUi.Menu2({ :title => title });
+        menu.addItem(new WatchUi.MenuItem(about, null, :about, null));
+        WatchUi.pushView(menu, new SettingsMenuDelegate(), WatchUi.SLIDE_UP);
     }
 }

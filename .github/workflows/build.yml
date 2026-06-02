@@ -3,10 +3,12 @@ name: Build
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
-  release:
-    types: [published]
+
+permissions:
+  contents: write
 
 env:
   SDK_VERSION: '9.1.0'
@@ -18,7 +20,7 @@ env:
 
 jobs:
   build:
-    name: Build .prg + .iq
+    name: Build .iq
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -77,25 +79,23 @@ jobs:
           printf '%s' "$DEV_KEY_B64" | base64 -d > developer_key
           chmod 600 developer_key
 
-      - name: Build sideload .prg (fenix6s)
-        run: monkeyc -o sauna.prg -f sauna/monkey.jungle -y developer_key -d fenix6s -w
-
       - name: Build store .iq
         run: monkeyc -e -o sauna.iq -f sauna/monkey.jungle -y developer_key -w
 
-      - name: Upload build artifacts
+      - name: Upload build artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: sauna-builds
-          path: |
-            sauna.prg
-            sauna.iq
+          name: sauna-iq
+          path: sauna.iq
           if-no-files-found: error
 
-      - name: Attach builds to GitHub release
-        if: github.event_name == 'release'
+      # On a `v*` tag push, create a DRAFT release with the .iq attached.
+      # Drafts are mutable, so the file gets attached even when the repo
+      # has immutable releases turned on; you then publish it manually.
+      - name: Create draft release with .iq attached
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
-          files: |
-            sauna.prg
-            sauna.iq
+          draft: true
+          files: sauna.iq
+          generate_release_notes: true

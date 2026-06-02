@@ -5,6 +5,20 @@ All notable changes to this project are documented here. The format follows
 [semantic versioning](https://semver.org/) — bump `version` in
 `sauna/manifest.xml` to match every release.
 
+## [1.2.0] — 2026-06-02
+
+### Added
+- **Settings → About** screen, accessible by long-pressing the MENU button
+  when no session is recording. The About screen shows the app name, the
+  current version, and a **scannable QR code** linking to the project's
+  GitHub page. The Settings menu currently has only the About entry but
+  is structured so more entries can be added later.
+
+### Changed
+- Renamed the app to **"Sauna Tracker"** (the `AppName` resource). The
+  recorded activity name in Garmin Connect remains "Sauna" — matching
+  Garmin's convention of naming activities by what they are, not by the app.
+
 ## [1.1.0] — 2026-06-01
 
 ### Added

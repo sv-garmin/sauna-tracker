@@ -1,0 +1,101 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+env:
+  SDK_VERSION: '9.1.0'
+  # Private repo hosting the Connect IQ SDK. The release tag below must
+  # exist there with the Linux SDK attached as a release asset whose name
+  # matches the pattern in the download step.
+  TOOLBOX_REPO: 'sv-garmin/toolbox'
+  TOOLBOX_TAG: 'sdk-9.1.0'
+
+jobs:
+  build:
+    name: Build .prg + .iq
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      # monkeyc is a Java tool; the Linux SDK doesn't bundle a JRE.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Connect IQ SDK
+        id: sdk-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/connectiq-sdk
+          key: connectiq-sdk-${{ env.SDK_VERSION }}-linux
+
+      - name: Download Connect IQ SDK from toolbox
+        if: steps.sdk-cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.TOOLBOX_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Missing secret TOOLBOX_TOKEN (fine-grained PAT with Contents:Read on ${TOOLBOX_REPO})"
+            exit 1
+          fi
+          mkdir -p ~/connectiq-sdk
+          gh release download "$TOOLBOX_TAG" \
+            --repo "$TOOLBOX_REPO" \
+            --pattern 'connectiq-sdk-lin-*.zip' \
+            --output /tmp/sdk.zip
+          unzip -q /tmp/sdk.zip -d ~/connectiq-sdk
+          rm /tmp/sdk.zip
+
+      - name: Add SDK to PATH
+        run: |
+          SDK_BIN=$(find ~/connectiq-sdk -maxdepth 4 -type d -name bin | head -1)
+          if [ -z "$SDK_BIN" ]; then
+            echo "::error::Could not find SDK bin/ under ~/connectiq-sdk"
+            find ~/connectiq-sdk -maxdepth 3 -type d
+            exit 1
+          fi
+          echo "Found SDK bin at: $SDK_BIN"
+          chmod +x "$SDK_BIN"/monkeyc "$SDK_BIN"/monkeydo 2>/dev/null || true
+          echo "$SDK_BIN" >> "$GITHUB_PATH"
+
+      - name: Restore developer key
+        env:
+          DEV_KEY_B64: ${{ secrets.GARMIN_DEV_KEY_BASE64 }}
+        run: |
+          if [ -z "$DEV_KEY_B64" ]; then
+            echo "::error::Missing secret GARMIN_DEV_KEY_BASE64"
+            exit 1
+          fi
+          printf '%s' "$DEV_KEY_B64" | base64 -d > developer_key
+          chmod 600 developer_key
+
+      - name: Build sideload .prg (fenix6s)
+        run: monkeyc -o sauna.prg -f sauna/monkey.jungle -y developer_key -d fenix6s -w
+
+      - name: Build store .iq
+        run: monkeyc -e -o sauna.iq -f sauna/monkey.jungle -y developer_key -w
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sauna-builds
+          path: |
+            sauna.prg
+            sauna.iq
+          if-no-files-found: error
+
+      - name: Attach builds to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            sauna.prg
+            sauna.iq

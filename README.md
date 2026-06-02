@@ -71,6 +71,45 @@ If you'd rather do it by hand: `./build.sh fenix6s` then
 The app appears in the watch's **activity list** (press START from the watch
 face). Updating is the same `./install.sh` — it just overwrites `SAUNA.PRG`.
 
+## Continuous integration
+
+`.github/workflows/build.yml` builds the sideload `.prg` and the store `.iq`
+on every push, PR, and GitHub release (also runnable manually via *Run
+workflow*). Build artifacts are uploaded to the run; on a release they're
+attached to it.
+
+The workflow pulls the Connect IQ SDK from a private repo so no Garmin
+credentials live in CI. To enable it after forking:
+
+1. **In `sv-garmin/toolbox`**, upload the **Linux** Connect IQ SDK zip as a
+   release asset under tag `sdk-9.1.0`. From the Garmin SDK Manager you can
+   download the Linux SDK regardless of the host OS:
+   ```sh
+   gh release create sdk-9.1.0 \
+     --repo sv-garmin/toolbox \
+     --title "Connect IQ SDK 9.1.0 (Linux)" \
+     --notes "Linux SDK for the sauna-tracker CI workflow." \
+     connectiq-sdk-lin-9.1.0-*.zip
+   ```
+
+2. **Create a fine-grained PAT** with **Contents: Read** + **Metadata: Read**
+   scoped to `sv-garmin/toolbox`
+   (Settings → Developer settings → Personal access tokens → Fine-grained).
+
+3. **Add two secrets to `sv-garmin/sauna-tracker`** under
+   *Settings → Secrets and variables → Actions*:
+
+   | Secret | Value |
+   |---|---|
+   | `TOOLBOX_TOKEN` | the fine-grained PAT |
+   | `GARMIN_DEV_KEY_BASE64` | `base64 -i developer_key` |
+
+   Or with `gh`:
+   ```sh
+   gh secret set TOOLBOX_TOKEN -b "$PAT"
+   gh secret set GARMIN_DEV_KEY_BASE64 < <(base64 -i developer_key)
+   ```
+
 ## Project layout
 
 ```

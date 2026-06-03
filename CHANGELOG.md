@@ -11,6 +11,16 @@ All notable changes to this project are documented here. The format follows
 - Repository moved to `github.com/sv-garmin/sauna-tracker`. The About
   screen's QR code is regenerated to point at the new URL.
 
+### Internal
+- GitHub Actions CI workflow builds the store `.iq` on every push/PR and,
+  on a `v*` tag push, creates a draft release with the `.iq` attached.
+  The SDK, device data and fonts are mirrored as a single tarball release
+  asset on the private `sv-garmin/toolbox` repo (Garmin's `Devices/`
+  endpoint requires login, so we host once instead of putting Garmin
+  credentials in CI). Secrets needed: `TOOLBOX_TOKEN`, `GARMIN_DEV_KEY_BASE64`.
+- All workflow actions pinned to commit SHAs.
+- Dependabot keeps the pinned action SHAs current (weekly, 7-day cooldown).
+
 ## [1.2.0] — 2026-06-02
 
 ### Added

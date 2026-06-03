@@ -11,10 +11,15 @@ permissions:
   contents: write
 
 env:
-  # The SDK is fetched directly from Garmin's public CDN. To bump it:
-  # find the new build identifier (e.g. via the SDK Manager) and update both.
+  # CI pulls the SDK + Devices + Fonts as one tarball from a release on
+  # the private sv-garmin/toolbox repo. The Devices/Fonts data is
+  # auth-gated on Garmin's side, so mirroring it ourselves keeps Garmin
+  # credentials out of CI.
   SDK_VERSION: '9.1.0'
   SDK_BUILD: '2026-03-09-6a872a80b'
+  TOOLBOX_REPO: 'sv-garmin/toolbox'
+  TOOLBOX_TAG: 'sdk-9.1.0'
+  BUNDLE_NAME: 'connectiq-9.1.0-2026-03-09-6a872a80b-linux.tar.gz'
 
 jobs:
   build:
@@ -30,32 +35,38 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Cache Connect IQ SDK
+      - name: Cache Connect IQ bundle
         id: sdk-cache
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
-          path: ~/connectiq-sdk
-          key: connectiq-sdk-${{ env.SDK_VERSION }}-${{ env.SDK_BUILD }}-linux
+          path: ~/.Garmin
+          key: connectiq-bundle-${{ env.SDK_VERSION }}-${{ env.SDK_BUILD }}-linux
 
-      - name: Download Connect IQ SDK
+      - name: Download Connect IQ bundle from toolbox
         if: steps.sdk-cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.TOOLBOX_TOKEN }}
         run: |
-          mkdir -p ~/connectiq-sdk
-          curl -fsSL \
-            "https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-${SDK_VERSION}-${SDK_BUILD}.zip" \
-            -o /tmp/sdk.zip
-          unzip -q /tmp/sdk.zip -d ~/connectiq-sdk
-          rm /tmp/sdk.zip
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Missing secret TOOLBOX_TOKEN (fine-grained PAT with Contents:Read on ${TOOLBOX_REPO})"
+            exit 1
+          fi
+          mkdir -p "$HOME/.Garmin"
+          gh release download "$TOOLBOX_TAG" \
+            --repo "$TOOLBOX_REPO" \
+            --pattern "$BUNDLE_NAME" \
+            --output /tmp/bundle.tar.gz
+          tar -xzf /tmp/bundle.tar.gz -C "$HOME/.Garmin"
+          rm /tmp/bundle.tar.gz
 
       - name: Add SDK to PATH
         run: |
-          SDK_BIN=$(find ~/connectiq-sdk -maxdepth 4 -type d -name bin | head -1)
-          if [ -z "$SDK_BIN" ]; then
-            echo "::error::Could not find SDK bin/ under ~/connectiq-sdk"
-            find ~/connectiq-sdk -maxdepth 3 -type d
+          SDK_BIN="$HOME/.Garmin/ConnectIQ/Sdks/connectiq-sdk-lin-${SDK_VERSION}-${SDK_BUILD}/bin"
+          if [ ! -d "$SDK_BIN" ]; then
+            echo "::error::SDK bin not found at $SDK_BIN"
+            find "$HOME/.Garmin" -maxdepth 4 -type d -name bin
             exit 1
           fi
-          echo "Found SDK bin at: $SDK_BIN"
           chmod +x "$SDK_BIN"/monkeyc "$SDK_BIN"/monkeydo 2>/dev/null || true
           echo "$SDK_BIN" >> "$GITHUB_PATH"
 

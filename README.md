@@ -46,3 +46,4 @@ Everything is shown on one screen, no paging:
 
 - [Changelog](CHANGELOG.md)
 - [Development guide](DEVELOPING.md) — building from source, sideloading, releasing
+- Licensed under the [MIT License](LICENSE)

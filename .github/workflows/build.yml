@@ -84,15 +84,17 @@ jobs:
       - name: Build store .iq
         run: monkeyc -e -o sauna.iq -f sauna/monkey.jungle -y developer_key -w
 
-      # .iq is a 7-zip archive of one .prg per device + a manifest. Verify
-      # it opens and that the device count matches the source manifest.
+      # .iq is a 7-zip archive of one or more .prg per declared product
+      # (some products expand to multiple SDK device variants, e.g.
+      # fenix7 -> fenix7 + fenix7nowifi). Verify it opens and that the
+      # .prg count is at least the number of declared products.
       - name: Sanity-check the .iq
         run: |
           7z t sauna.iq
-          expected=$(grep -c '<iq:product' sauna/manifest.xml)
-          actual=$(7z l sauna.iq | grep -Ec '\.prg$')
-          echo "Expected $expected device .prg files, found $actual"
-          [ "$expected" -eq "$actual" ]
+          products=$(grep -c '<iq:product' sauna/manifest.xml)
+          prgs=$(7z l sauna.iq | grep -Ec '\.prg$')
+          echo "Declared products: $products, .prg files inside .iq: $prgs"
+          [ "$prgs" -ge "$products" ]
 
       - name: Upload build artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

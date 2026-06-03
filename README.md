@@ -22,7 +22,7 @@ on the next sync and appears in the activity list.
 |-----------------------|---------------------------------------------------------|
 | START (top-right)     | Start; press again to pause + open the finish menu      |
 | BACK (bottom-right)   | Switch sauna ⇄ relax while running; resume from pause; exits when idle |
-| MENU (long-press UP)  | Open the finish menu (Resume / Save / Discard)          |
+| MENU (long-press UP)  | Open the finish menu while recording, or the Settings menu when idle |
 
 A session starts in the **sauna** phase; each BACK press ends the current
 phase and starts the other one (recorded as a new lap). The finish menu
@@ -41,6 +41,17 @@ Everything is shown on one screen, no paging:
   84 kcal     S2 R1    calories   | sauna/relax counts
        14:35           time of day
 ```
+
+On **Instinct** watches the current phase is drawn as an icon inside the
+sub-display lens (a flame for SAUNA, a "Z" for RELAX, "||" for PAUSED,
+▶ for READY) instead of the "SAUNA / RELAX" label, and the phase timer
+sits to the left of the lens. Everything else is the same.
+
+## Settings → About
+
+Long-press **MENU** when no session is recording to open the **Settings**
+menu. Today it has one entry, **About**, which shows the app version and
+a QR code linking to the source repository.
 
 ## More
 

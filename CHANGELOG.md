@@ -20,6 +20,8 @@ All notable changes to this project are documented here. The format follows
   credentials in CI). Secrets needed: `TOOLBOX_TOKEN`, `GARMIN_DEV_KEY_BASE64`.
 - All workflow actions pinned to commit SHAs.
 - Dependabot keeps the pinned action SHAs current (weekly, 7-day cooldown).
+- README is now end-user-only; building, sideloading, CI and release
+  tooling moved to a new `DEVELOPING.md`.
 
 ## [1.2.0] — 2026-06-02
 

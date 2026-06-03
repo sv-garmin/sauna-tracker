@@ -5,10 +5,13 @@ This is the contributor / hacker guide. For end-user info, see
 
 ## Prerequisites
 
-- macOS or Linux
+- **macOS.** The `build.sh` / `run.sh` / `install.sh` helpers below use
+  macOS-only paths (`~/Library/Application Support/Garmin/ConnectIQ/`,
+  `/Volumes/GARMIN`, `diskutil`). On Linux you can still build by invoking
+  `monkeyc` directly; the helpers won't work as-is.
 - [Garmin Connect IQ SDK](https://developer.garmin.com/connect-iq/sdk/) installed
-  via the SDK Manager (the helpers below pick up whatever version `current-sdk.cfg`
-  points to)
+  via the SDK Manager (the helpers pick up whatever version `current-sdk.cfg`
+  points to).
 - A Garmin developer key at `./developer_key` (used to sign builds). It's
   `.gitignore`'d and must never be committed — losing it means you can't
   publish updates to the app in the Connect IQ Store.
@@ -29,9 +32,11 @@ This is the contributor / hacker guide. For end-user info, see
 In the simulator, use the on-screen buttons (or the arrow keys) for
 START / DOWN / BACK.
 
-## Sideload onto a real watch
+## Sideload onto a real watch (macOS)
 
-Plug the watch in by USB (the `GARMIN` drive should mount), then:
+`install.sh` assumes macOS — it looks for the watch under `/Volumes/GARMIN`
+and ejects with `diskutil`. Plug the watch in by USB (the `GARMIN` drive
+should mount), then:
 
 ```sh
 ./install.sh             # builds for fenix6s, copies to the watch

@@ -43,15 +43,17 @@ Everything is shown on one screen, no paging:
 ```
 
 On **Instinct** watches the current phase is drawn as an icon inside the
-sub-display lens (a flame for SAUNA, a "Z" for RELAX, "||" for PAUSED,
-▶ for READY) instead of the "SAUNA / RELAX" label, and the phase timer
-sits to the left of the lens. Everything else is the same.
+sub-display lens — a play triangle for READY, a flame for SAUNA, a Z
+shape for RELAX, and two vertical bars for PAUSED — instead of the
+SAUNA / RELAX label, and the phase timer sits to the left of the lens.
+Everything else is the same.
 
 ## Settings → About
 
-Long-press **MENU** when no session is recording to open the **Settings**
-menu. Today it has one entry, **About**, which shows the app version and
-a QR code linking to the source repository.
+Long-press **MENU** (the long-press of the UP button on Fenix / Epix)
+when no session is recording to open the **Settings** menu. Today it
+has one entry, **About**, which shows the app version and a QR code
+linking to the source repository.
 
 ## More
 

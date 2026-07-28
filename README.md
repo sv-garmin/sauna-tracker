@@ -5,10 +5,16 @@ activity. Tracks **elapsed time, heart rate, calories and temperature**,
 alternates between **sauna** and **relax** phases, and saves each session
 to **Garmin Connect**. No GPS / location is used.
 
+> [!WARNING]
+> **A sauna's heat can exceed the watch's rated operating range.** Check the
+> maximum operating temperature in your watch's specifications before taking
+> it into a sauna. Sustained heat above that limit risks damaging the device,
+> and no app can protect it. Use at your own risk.
+
 > **Temperature note:** the value comes from the watch's built-in thermometer.
 > Worn on the wrist it reads close to body temperature, not true sauna air
-> temperature, and a sauna's heat can exceed the watch's rated operating
-> range. An external Garmin *tempe* sensor gives an accurate ambient reading.
+> temperature. An external Garmin *tempe* sensor gives an accurate ambient
+> reading.
 
 ## Install
 

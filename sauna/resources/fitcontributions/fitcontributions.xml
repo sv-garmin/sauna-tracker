@@ -1,0 +1,12 @@
+<resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <fitContributions>
+        <fitField id="0"
+            displayInChart="true"
+            sortOrder="0"
+            precision="1"
+            chartTitle="@Strings.TempChartTitle"
+            dataLabel="@Strings.TempDataLabel"
+            unitLabel="@Strings.TempUnitLabel"
+            fillColor="#FF5500" />
+    </fitContributions>
+</resources>

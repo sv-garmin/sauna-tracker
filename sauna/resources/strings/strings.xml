@@ -4,4 +4,7 @@
     <string id="AppVersion">1.2.1</string>
     <string id="SettingsTitle">Settings</string>
     <string id="AboutItem">About</string>
+    <string id="TempChartTitle">Temperature</string>
+    <string id="TempDataLabel">Temp</string>
+    <string id="TempUnitLabel">°C</string>
 </strings>

@@ -3,6 +3,7 @@ import Toybox.ActivityRecording;
 import Toybox.Attention;
 import Toybox.FitContributor;
 import Toybox.Lang;
+import Toybox.Sensor;
 import Toybox.SensorHistory;
 import Toybox.Timer;
 
@@ -37,12 +38,15 @@ class SaunaActivity {
         _session = null;
         _state = STATE_STOPPED;
         _roundType = ROUND_SAUNA;
-        _saunaCount = 1;
+        _saunaCount = 0;
         _relaxCount = 0;
         _roundStartMs = 0;
         _tempField = null;
         _sampleTimer = null;
         _currentTempC = null;
+
+        enableSensors();
+        refreshTemperature();
     }
 
     public function getState() as SaunaState {
@@ -64,6 +68,22 @@ class SaunaActivity {
     // Latest ambient temperature in Celsius, or null if unavailable.
     public function getCurrentTempC() as Float? {
         return _currentTempC;
+    }
+
+    // Current heart rate from the activity or live sensor, or null if unavailable.
+    public function getCurrentHeartRate(info as Activity.Info?) as Number? {
+        var hr = (info != null) ? info.currentHeartRate : null;
+        if (hr != null) {
+            return hr;
+        }
+        if ((Toybox has :Sensor) && (Sensor has :getInfo)) {
+            var sensorInfo = Sensor.getInfo();
+            var sensorHr = (sensorInfo != null) ? sensorInfo.heartRate : null;
+            if (sensorHr != null) {
+                return sensorHr;
+            }
+        }
+        return null;
     }
 
     // timerTime (moving ms) at which the current phase started.
@@ -105,7 +125,10 @@ class SaunaActivity {
     // Pause the timer but keep the session open.
     public function pause() as Void {
         var s = _session;
-        if (s != null && s.isRecording()) {
+        if (s == null) {
+            return;
+        }
+        if (s.isRecording()) {
             s.stop();
         }
         stopSampling();
@@ -127,7 +150,8 @@ class SaunaActivity {
                 _saunaCount += 1;
             }
             var info = Activity.getActivityInfo();
-            _roundStartMs = (info != null && info.timerTime != null) ? info.timerTime : 0;
+            var timerTime = (info != null) ? info.timerTime : null;
+            _roundStartMs = (timerTime != null) ? timerTime : 0;
             vibe(75, 150);
             return true;
         }
@@ -144,8 +168,7 @@ class SaunaActivity {
             }
             s.save();
         }
-        _session = null;
-        _state = STATE_STOPPED;
+        resetSessionState();
         vibe(100, 400);
     }
 
@@ -159,8 +182,52 @@ class SaunaActivity {
             }
             s.discard();
         }
+        resetSessionState();
+    }
+
+    // Release timers and sensors when the app shuts down.
+    public function shutdown() as Void {
+        stopSampling();
+        disableSensors();
+    }
+
+    // Refresh the cached temperature reading (without writing to FIT).
+    public function refreshTemperature() as Void {
+        _currentTempC = readTemperatureC();
+    }
+
+    // Read the current temperature and attach it to the FIT record stream.
+    public function sampleTemperature() as Void {
+        var c = readTemperatureC();
+        _currentTempC = c;
+        if (_state == STATE_RUNNING && c != null && _tempField != null) {
+            (_tempField as FitContributor.Field).setData(c);
+        }
+    }
+
+    private function resetSessionState() as Void {
         _session = null;
+        _tempField = null;
         _state = STATE_STOPPED;
+        _roundType = ROUND_SAUNA;
+        _saunaCount = 0;
+        _relaxCount = 0;
+        _roundStartMs = 0;
+    }
+
+    private function enableSensors() as Void {
+        if ((Toybox has :Sensor) && (Sensor has :setEnabledSensors)) {
+            Sensor.setEnabledSensors([
+                Sensor.SENSOR_HEARTRATE,
+                Sensor.SENSOR_TEMPERATURE
+            ] as Array<Sensor.SensorType>);
+        }
+    }
+
+    private function disableSensors() as Void {
+        if ((Toybox has :Sensor) && (Sensor has :setEnabledSensors)) {
+            Sensor.setEnabledSensors([] as Array<Sensor.SensorType>);
+        }
     }
 
     private function startSampling() as Void {
@@ -177,22 +244,23 @@ class SaunaActivity {
         }
     }
 
-    // Read the current temperature and attach it to the FIT record stream.
-    public function sampleTemperature() as Void {
-        var c = readTemperatureC();
-        _currentTempC = c;
-        if (c != null && _tempField != null) {
-            (_tempField as FitContributor.Field).setData(c);
-        }
-    }
-
     private function readTemperatureC() as Float? {
+        // Prefer live ambient temperature from a paired external Garmin tempe sensor.
+        if ((Toybox has :Sensor) && (Sensor has :getInfo)) {
+            var sensorInfo = Sensor.getInfo();
+            var temp = (sensorInfo != null) ? sensorInfo.temperature : null;
+            if (temp != null) {
+                return temp.toFloat();
+            }
+        }
+        // Fall back to the watch's built-in thermometer history.
         if ((Toybox has :SensorHistory) && (SensorHistory has :getTemperatureHistory)) {
             var iter = SensorHistory.getTemperatureHistory({ :period => 1, :order => SensorHistory.ORDER_NEWEST_FIRST });
             if (iter != null) {
                 var sample = iter.next();
-                if (sample != null && sample.data != null) {
-                    return (sample.data as Numeric).toFloat();
+                var data = (sample != null) ? sample.data : null;
+                if (data != null) {
+                    return data.toFloat();
                 }
             }
         }

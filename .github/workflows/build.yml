@@ -8,18 +8,18 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   # CI pulls the SDK + Devices + Fonts as one tarball from a release on
   # the private sv-garmin/toolbox repo. The Devices/Fonts data is
   # auth-gated on Garmin's side, so mirroring it ourselves keeps Garmin
   # credentials out of CI.
-  SDK_VERSION: '9.2.0'
-  SDK_BUILD: '2026-06-09-92a1605b2'
+  SDK_VERSION: '9.3.0'
+  SDK_BUILD: '2026-10-20-95888f262'
   TOOLBOX_REPO: 'sv-garmin/toolbox'
-  TOOLBOX_TAG: 'sdk-9.2.0'
-  BUNDLE_NAME: 'connectiq-9.2.0-2026-06-09-92a1605b2-linux.tar.gz'
+  TOOLBOX_TAG: 'sdk-9.3.0'
+  BUNDLE_NAME: 'connectiq-9.3.0-2026-10-20-95888f262-linux.tar.gz'
 
 jobs:
   build:
@@ -103,11 +103,24 @@ jobs:
           path: sauna.iq
           if-no-files-found: error
 
-      # On a `v*` tag push, create a DRAFT release with the .iq attached.
-      # Drafts are mutable, so the file gets attached even when the repo
-      # has immutable releases turned on; you then publish it manually.
+  # On a `v*` tag push, create a DRAFT release with the .iq attached.
+  # Drafts are mutable, so the file gets attached even when the repo
+  # has immutable releases turned on; you then publish it manually.
+  release:
+    name: Create draft release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: sauna-iq
+
       - name: Create draft release with .iq attached
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           draft: true

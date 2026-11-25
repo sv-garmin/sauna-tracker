@@ -16,8 +16,11 @@ class saunaApp extends Application.AppBase {
     // back, low battery), save it so the sauna isn't lost.
     public function onStop(state as Dictionary?) as Void {
         var a = _activity;
-        if (a != null && a.isActive()) {
-            a.save();
+        if (a != null) {
+            if (a.isActive()) {
+                a.save();
+            }
+            a.shutdown();
         }
     }
 

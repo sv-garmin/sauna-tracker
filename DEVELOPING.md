@@ -65,11 +65,13 @@ sauna/
     StopMenuDelegate.mc         finish menu (Resume / Save / Discard)
     SettingsMenuDelegate.mc     Settings menu (long-press MENU when idle)
     AboutView.mc                About screen — app name, version, GitHub QR
+    DisplayUtils.mc             shared subscreen, text, and mono-color helpers
     SaunaActivity.mc            ActivityRecording wrapper:
-                                  state, phases, temperature
+                                  state, phases, HR & temperature sensors
   resources/
     drawables/                  launcher icon + GitHub QR PNG
-    strings/                    AppName, AppVersion, menu labels
+    fitcontributions/           custom FIT chart definition for temperature
+    strings/                    AppName, AppVersion, menu & chart labels
 ```
 
 ## CI
@@ -93,12 +95,13 @@ that tarball and extracts it to `~/.Garmin/ConnectIQ/`. Required repo secrets:
 
 ## Cutting a release
 
-1. Bump the version in **three** places (until Connect IQ exposes the
+1. Bump the version in **four** places (until Connect IQ exposes the
    manifest version at runtime):
    - `sauna/manifest.xml` — the `version` attribute on `<iq:application>`
    - `sauna/resources/strings/strings.xml` — the `AppVersion` string
      (displayed by the About screen)
    - `CHANGELOG.md` — promote the `[Unreleased]` section to the new version
+   - `assets/changelog.txt` — plain-text changelog for the Connect IQ Store
 2. Commit + push.
 3. Create a signed tag and push it:
    ```sh

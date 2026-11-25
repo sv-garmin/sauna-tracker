@@ -5,7 +5,7 @@ All notable changes to this project are documented here. The format follows
 [semantic versioning](https://semver.org/) — bump `version` in
 `sauna/manifest.xml` to match every release.
 
-## [Unreleased]
+## [1.3.0] — 2026-11-24
 
 ### Added
 - **Settings → Vibration** toggle to turn haptic feedback on or off

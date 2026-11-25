@@ -3,7 +3,7 @@ SAUNA TRACKER — CHANGELOG
 All notable changes to this project.
 
 
-Unreleased
+v1.3.0 — 2026-11-24
 
 Added
   - Settings / Vibration toggle to turn haptic feedback on or off

@@ -3,6 +3,31 @@ SAUNA TRACKER — CHANGELOG
 All notable changes to this project.
 
 
+Unreleased
+
+Added
+  - Settings / Vibration toggle to turn haptic feedback on or off
+    (saved across sessions; also respects the watch's system vibration
+    setting).
+  - Garmin Connect temperature chart so recorded temperature is
+    displayed as a graph in saved activities.
+  - External Garmin tempe sensor support (falling back to the built-in
+    thermometer when no tempe is connected), plus live heart rate and
+    temperature readings on the READY screen before starting.
+
+Changed
+  - Excluded non-watch devices (Edge bike computers and eTrex / GPSMAP
+    handhelds) from supported targets.
+
+Fixed
+  - Improved contrast on monochrome Instinct and Descent G1 displays so
+    icons and labels never disappear on 1-bit screens.
+  - READY screen no longer shows stale timer or calorie values from a
+    previous activity, and starts at S0 R0 before recording begins.
+  - About screen QR code and caption no longer overlap or clip on small
+    screens (Instinct 2S, Forerunner 55).
+
+
 v1.2.1 — 2026-06-02
 
 Changed

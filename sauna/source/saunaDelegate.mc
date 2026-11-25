@@ -61,9 +61,19 @@ class saunaDelegate extends WatchUi.BehaviorDelegate {
 
     private function openSettingsMenu() as Void {
         var title = WatchUi.loadResource(Rez.Strings.SettingsTitle) as String;
+        var vibrate = WatchUi.loadResource(Rez.Strings.VibrateItem) as String;
+        var onLabel = WatchUi.loadResource(Rez.Strings.StateOn) as String;
+        var offLabel = WatchUi.loadResource(Rez.Strings.StateOff) as String;
         var about = WatchUi.loadResource(Rez.Strings.AboutItem) as String;
         var menu = new WatchUi.Menu2({ :title => title });
+        menu.addItem(new WatchUi.ToggleMenuItem(
+            vibrate,
+            { :enabled => onLabel, :disabled => offLabel },
+            :vibrate,
+            _activity.isVibrateEnabled(),
+            null
+        ));
         menu.addItem(new WatchUi.MenuItem(about, null, :about, null));
-        WatchUi.pushView(menu, new SettingsMenuDelegate(), WatchUi.SLIDE_UP);
+        WatchUi.pushView(menu, new SettingsMenuDelegate(_activity), WatchUi.SLIDE_UP);
     }
 }

@@ -1,10 +1,12 @@
 import Toybox.Activity;
 import Toybox.ActivityRecording;
+import Toybox.Application.Storage;
 import Toybox.Attention;
 import Toybox.FitContributor;
 import Toybox.Lang;
 import Toybox.Sensor;
 import Toybox.SensorHistory;
+import Toybox.System;
 import Toybox.Timer;
 
 // Recording state machine for a sauna session.
@@ -33,6 +35,7 @@ class SaunaActivity {
     private var _tempField as FitContributor.Field?; // records temperature into the FIT
     private var _sampleTimer as Timer.Timer?;
     private var _currentTempC as Float?;
+    private var _vibrateEnabled as Boolean;
 
     public function initialize() {
         _session = null;
@@ -44,6 +47,7 @@ class SaunaActivity {
         _tempField = null;
         _sampleTimer = null;
         _currentTempC = null;
+        _vibrateEnabled = loadVibrateSetting();
 
         enableSensors();
         refreshTemperature();
@@ -93,6 +97,15 @@ class SaunaActivity {
 
     public function isActive() as Boolean {
         return _state != STATE_STOPPED;
+    }
+
+    public function isVibrateEnabled() as Boolean {
+        return _vibrateEnabled;
+    }
+
+    public function setVibrateEnabled(enabled as Boolean) as Void {
+        _vibrateEnabled = enabled;
+        Storage.setValue("vibrate", enabled);
     }
 
     // Start a brand-new session, or resume a paused one.
@@ -267,7 +280,22 @@ class SaunaActivity {
         return null;
     }
 
+    private function loadVibrateSetting() as Boolean {
+        var stored = Storage.getValue("vibrate");
+        if (stored instanceof Boolean) {
+            return stored;
+        }
+        return true;
+    }
+
     private function vibe(intensity as Number, durationMs as Number) as Void {
+        if (!_vibrateEnabled) {
+            return;
+        }
+        var settings = System.getDeviceSettings();
+        if ((settings has :vibrateOn) && !settings.vibrateOn) {
+            return;
+        }
         if (Attention has :vibrate) {
             Attention.vibrate(
                 [new Attention.VibeProfile(intensity, durationMs)] as Array<Attention.VibeProfile>

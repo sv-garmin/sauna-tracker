@@ -54,12 +54,25 @@ shape for RELAX, and two vertical bars for PAUSED — instead of the
 SAUNA / RELAX label, and the phase timer sits to the left of the lens.
 Everything else is the same.
 
-## Settings → About
+## Settings
 
 Long-press **MENU** (the long-press of the UP button on Fenix / Epix)
-when no session is recording to open the **Settings** menu. Today it
-has one entry, **About**, which shows the app version and a QR code
-linking to the source repository.
+when no session is recording to open the **Settings** menu:
+
+- **Vibration** — turn haptic feedback on or off (persisted across sessions;
+  also respects the watch's system vibration setting).
+- **About** — shows the app version and a QR code linking to the source
+  repository.
+
+## Watch sounds in the sauna
+
+Sauna Tracker itself never plays audio tones (it only uses vibration, which
+you can turn off in **Settings → Vibration**). Any beeps you hear come from
+the watch firmware (button key tones, activity start/lap tones, or phone
+notifications). Garmin Connect IQ does not provide an API for apps to mute
+watch sounds or enable Do Not Disturb automatically — to keep the sauna quiet,
+turn on **Do Not Disturb** from your watch's Controls menu (or disable key /
+alert tones in watch settings) before starting a session.
 
 ## More
 

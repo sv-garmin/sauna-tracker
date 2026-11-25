@@ -5,6 +5,40 @@ All notable changes to this project are documented here. The format follows
 [semantic versioning](https://semver.org/) — bump `version` in
 `sauna/manifest.xml` to match every release.
 
+## [1.3.0] — 2026-11-24
+
+### Added
+- **Settings → Vibration** toggle to turn haptic feedback on or off
+  (persisted across sessions; also respects the watch's system vibration
+  setting).
+- Temperature chart definition (`fitContributions`) so recorded temperature
+  now appears as a graph in Garmin Connect.
+- Live external Garmin *tempe* temperature sensor support via `Toybox.Sensor`
+  (falling back to the watch's built-in thermometer history when no *tempe*
+  is connected), plus live heart rate and temperature on the READY screen
+  before starting a session.
+
+### Changed
+- Excluded non-watch targets (Edge bike computers and eTrex / GPSMAP
+  handhelds) from the supported product list.
+
+### Fixed
+- Monochrome Instinct displays (Instinct 2 / 2S / 2X / E / 3 Solar /
+  Crossover, Descent G1) now render all accents in white so low-luminance
+  colors (such as the blue RELAX icon and red HR label) never disappear on
+  1-bit screens, while keeping full color on AMOLED models.
+- READY screen no longer displays stale timer or calorie values from a prior
+  watch activity, and shows `S0 R0` until a session starts.
+- About screen QR code and `"scan for source"` caption now scale/position
+  dynamically so they no longer overlap or clip on small displays
+  (Instinct 2S, Forerunner 55).
+
+### Internal
+- Enabled strict Monkey C type checking (`project.typecheck = 3`).
+- Bumped CI Connect IQ SDK bundle to `9.3.0` and scoped workflow permissions
+  to least privilege (`contents: read` for build, `contents: write` only on
+  the tag release job).
+
 ## [1.2.1] — 2026-06-02
 
 ### Changed

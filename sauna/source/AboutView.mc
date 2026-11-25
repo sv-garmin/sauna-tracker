@@ -2,10 +2,33 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// "About" screen: app name + version. BACK returns to the previous view.
+// "About" screen: app name, version, and GitHub QR code. BACK returns to the previous view.
 class AboutView extends WatchUi.View {
+    private var _appName as String?;
+    private var _version as String?;
+    private var _qr as WatchUi.BitmapResource?;
+
     public function initialize() {
         View.initialize();
+        _appName = null;
+        _version = null;
+        _qr = null;
+    }
+
+    public function onShow() as Void {
+        if (_appName == null) {
+            _appName = WatchUi.loadResource(Rez.Strings.AppName) as String;
+        }
+        if (_version == null) {
+            _version = WatchUi.loadResource(Rez.Strings.AppVersion) as String;
+        }
+        if (_qr == null) {
+            _qr = WatchUi.loadResource(Rez.Drawables.QrGithub) as WatchUi.BitmapResource;
+        }
+    }
+
+    public function onHide() as Void {
+        _qr = null;
     }
 
     public function onUpdate(dc as Dc) as Void {
@@ -16,18 +39,15 @@ class AboutView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
         dc.clear();
 
-        var appName = WatchUi.loadResource(Rez.Strings.AppName) as String;
-        var version = WatchUi.loadResource(Rez.Strings.AppVersion) as String;
-        var qr = WatchUi.loadResource(Rez.Drawables.QrGithub);
+        var appName = (_appName != null) ? (_appName as String) : "";
+        var version = (_version != null) ? (_version as String) : "";
+        var qr = _qr;
 
-        var sub = findSubscreen();
+        var sub = DisplayUtils.findSubscreen();
         if (sub != null) {
             // Instinct (sub-display lens): app name + version stacked to the
             // LEFT of the lens — same shape as the main dashboard's
-            // timer + total — with the QR centered in the area below.
-            // The upper-left zone is only ~113 px wide and the semi-octagon
-            // shape clips its left edge near the top, so we split the app
-            // name on the first space to keep each line short.
+            // timer + total — with the QR + caption centered in the area below.
             var subX = sub.x as Number;
             var subY = sub.y as Number;
             var subH = sub.height as Number;
@@ -40,43 +60,56 @@ class AboutView extends WatchUi.View {
             if (spaceIdx != null) {
                 var line1 = appName.substring(0, spaceIdx);
                 var line2 = appName.substring(spaceIdx + 1, appName.length());
-                drawCentered(dc, leftCx, subY + subH * 0.20, Graphics.FONT_XTINY, line1);
-                drawCentered(dc, leftCx, subY + subH * 0.50, Graphics.FONT_XTINY, line2);
+                if (line1 != null) {
+                    DisplayUtils.drawCentered(dc, leftCx, subY + subH * 0.20, Graphics.FONT_XTINY, line1);
+                }
+                if (line2 != null) {
+                    DisplayUtils.drawCentered(dc, leftCx, subY + subH * 0.50, Graphics.FONT_XTINY, line2);
+                }
             } else {
-                drawCentered(dc, leftCx, subY + subH * 0.35, Graphics.FONT_XTINY, appName);
+                DisplayUtils.drawCentered(dc, leftCx, subY + subH * 0.35, Graphics.FONT_XTINY, appName);
             }
-            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-            drawCentered(dc, leftCx, subY + subH * 0.82, Graphics.FONT_XTINY, "v" + version);
+            dc.setColor(DisplayUtils.fgColor(Graphics.COLOR_LT_GRAY), Graphics.COLOR_TRANSPARENT);
+            DisplayUtils.drawCentered(dc, leftCx, subY + subH * 0.82, Graphics.FONT_XTINY, "v" + version);
 
-            dc.drawBitmap(cx - 40, topY + useH * 0.50 - 40, qr);
-            drawCentered(dc, cx, topY + useH * 0.93, Graphics.FONT_XTINY, "scan for source");
+            if (qr != null) {
+                drawQrAndHint(dc, cx, topY, useH, h, qr, 2);
+            }
         } else {
-            // Round watches (Fenix/Epix): stacked lines centered at the top,
-            // QR in the middle, scan hint at the bottom.
+            // Round / rectangular watches: stacked title + version at top,
+            // QR + scan hint vertically centered in the space below.
             dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-            drawCentered(dc, cx, h * 0.18, Graphics.FONT_TINY, appName);
-            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-            drawCentered(dc, cx, h * 0.28, Graphics.FONT_XTINY, "v" + version);
-            dc.drawBitmap(cx - 40, h * 0.60 - 40, qr);
-            drawCentered(dc, cx, h * 0.93, Graphics.FONT_XTINY, "scan for source");
-        }
-    }
+            DisplayUtils.drawCentered(dc, cx, h * 0.16, Graphics.FONT_TINY, appName);
+            dc.setColor(DisplayUtils.fgColor(Graphics.COLOR_LT_GRAY), Graphics.COLOR_TRANSPARENT);
+            var verY = (h * 26) / 100;
+            DisplayUtils.drawCentered(dc, cx, verY, Graphics.FONT_XTINY, "v" + version);
 
-    // Returns the sub-display rectangle, or null on watches without one.
-    private function findSubscreen() as Graphics.BoundingBox? {
-        if (WatchUi has :getSubscreen) {
-            var sub = WatchUi.getSubscreen();
-            if (sub != null && sub.x != null && sub.y != null
-                    && sub.width != null && sub.height != null) {
-                return sub;
+            if (qr != null) {
+                var contentTop = verY + dc.getFontHeight(Graphics.FONT_XTINY) / 2 + 4;
+                var contentBottom = h - (h * 6) / 100;
+                drawQrAndHint(dc, cx, contentTop, contentBottom - contentTop, h, qr, 4);
             }
         }
-        return null;
     }
 
-    private function drawCentered(dc as Dc, x as Numeric, y as Numeric, font as Graphics.FontType, text as String) as Void {
-        dc.drawText(x, y, font, text,
-            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    private function drawQrAndHint(
+        dc as Dc, cx as Number, topY as Number, availH as Number,
+        screenH as Number, qr as WatchUi.BitmapResource, gap as Number
+    ) as Void {
+        var qrW = qr.getWidth();
+        var qrH = qr.getHeight();
+        var hintH = dc.getFontHeight(Graphics.FONT_XTINY);
+        var blockH = qrH + gap + hintH;
+        var qrY = topY + (availH - blockH) / 2;
+        if (qrY < topY) {
+            qrY = topY;
+        }
+        dc.drawBitmap(cx - qrW / 2, qrY, qr);
+        var hintY = qrY + qrH + gap + hintH / 2;
+        if (hintY + hintH / 2 <= screenH) {
+            dc.setColor(DisplayUtils.fgColor(Graphics.COLOR_LT_GRAY), Graphics.COLOR_TRANSPARENT);
+            DisplayUtils.drawCentered(dc, cx, hintY, Graphics.FONT_XTINY, "scan for source");
+        }
     }
 }
 

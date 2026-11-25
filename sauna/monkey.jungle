@@ -1,1 +1,16 @@
 project.manifest = manifest.xml
+project.typecheck = 3
+
+# Default: color displays use full accent colors.
+base.excludeAnnotations = mono
+
+# 1-bit monochrome displays: render all foreground accents in white so
+# low-luminance colors (blue, red) never quantize to black-on-black.
+descentg1.excludeAnnotations = color
+instinct2.excludeAnnotations = color
+instinct2s.excludeAnnotations = color
+instinct2x.excludeAnnotations = color
+instinct3solar45mm.excludeAnnotations = color
+instinctcrossover.excludeAnnotations = color
+instincte40mm.excludeAnnotations = color
+instincte45mm.excludeAnnotations = color

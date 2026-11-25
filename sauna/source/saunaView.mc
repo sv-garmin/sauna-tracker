@@ -25,13 +25,20 @@ import Toybox.WatchUi;
 class saunaView extends WatchUi.View {
     private var _activity as SaunaActivity;
     private var _timer as Timer.Timer?;
+    private var _idleTicks as Number;
 
     public function initialize(activity as SaunaActivity) {
         View.initialize();
         _activity = activity;
+        _timer = null;
+        _idleTicks = 0;
     }
 
     public function onShow() as Void {
+        _idleTicks = 0;
+        if (_activity.getState() != STATE_RUNNING) {
+            _activity.refreshTemperature();
+        }
         if (_timer == null) {
             _timer = new Timer.Timer();
         }
@@ -45,6 +52,12 @@ class saunaView extends WatchUi.View {
     }
 
     public function onTick() as Void {
+        if (_activity.getState() != STATE_RUNNING) {
+            _idleTicks += 1;
+            if (_idleTicks % 5 == 0) {
+                _activity.refreshTemperature();
+            }
+        }
         WatchUi.requestUpdate();
     }
 
@@ -59,7 +72,7 @@ class saunaView extends WatchUi.View {
         var sauna = _activity.getRoundType() == ROUND_SAUNA;
         var info = Activity.getActivityInfo();
 
-        var sub = findSubscreen();
+        var sub = DisplayUtils.findSubscreen();
         if (sub != null) {
             drawSubscreenLayout(dc, w, h, sub, state, sauna, info);
         } else {
@@ -73,8 +86,8 @@ class saunaView extends WatchUi.View {
         state as SaunaState, sauna as Boolean, info as Activity.Info?
     ) as Void {
         var cx = w / 2;
-        var lx = w * 0.28;
-        var rx = w * 0.72;
+        var lx = (w * 28) / 100;
+        var rx = (w * 72) / 100;
 
         var label;
         var labelColor;
@@ -88,27 +101,27 @@ class saunaView extends WatchUi.View {
             label = "READY";
             labelColor = Graphics.COLOR_LT_GRAY;
         }
-        dc.setColor(labelColor, Graphics.COLOR_TRANSPARENT);
-        drawCentered(dc, cx, h * 0.10, Graphics.FONT_TINY, label);
+        dc.setColor(DisplayUtils.fgColor(labelColor), Graphics.COLOR_TRANSPARENT);
+        DisplayUtils.drawCentered(dc, cx, h * 0.10, Graphics.FONT_TINY, label);
 
-        var totalMs = activityTimerMs(info);
-        var phaseMs = totalMs - _activity.getRoundStartMs();
+        var totalMs = (state == STATE_STOPPED) ? 0 : activityTimerMs(info);
+        var phaseMs = (state == STATE_STOPPED) ? 0 : totalMs - _activity.getRoundStartMs();
         if (phaseMs < 0) { phaseMs = 0; }
         dc.setColor(
-            state == STATE_PAUSED ? Graphics.COLOR_YELLOW : Graphics.COLOR_WHITE,
+            DisplayUtils.fgColor(state == STATE_PAUSED ? Graphics.COLOR_YELLOW : Graphics.COLOR_WHITE),
             Graphics.COLOR_TRANSPARENT
         );
-        drawCentered(dc, cx, h * 0.27, Graphics.FONT_NUMBER_MEDIUM, formatTime(phaseMs));
+        DisplayUtils.drawCentered(dc, cx, h * 0.27, Graphics.FONT_NUMBER_MEDIUM, formatTime(phaseMs));
 
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        drawCentered(dc, cx, h * 0.42, Graphics.FONT_XTINY,
+        dc.setColor(DisplayUtils.fgColor(Graphics.COLOR_LT_GRAY), Graphics.COLOR_TRANSPARENT);
+        DisplayUtils.drawCentered(dc, cx, h * 0.42, Graphics.FONT_XTINY,
             state == STATE_STOPPED ? "Press START" : "total " + formatTime(totalMs));
 
         drawHrTempRow(dc, lx, rx, h * 0.56, info);
-        drawCalCountsRow(dc, lx, rx, h * 0.68, info);
+        drawCalCountsRow(dc, lx, rx, h * 0.68, state, info);
 
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        drawCentered(dc, cx, h * 0.85, Graphics.FONT_SMALL, formatClock());
+        dc.setColor(DisplayUtils.fgColor(Graphics.COLOR_LT_GRAY), Graphics.COLOR_TRANSPARENT);
+        DisplayUtils.drawCentered(dc, cx, h * 0.85, Graphics.FONT_SMALL, formatClock());
     }
 
     // --- Sub-display layout (Instinct etc.) ---
@@ -126,49 +139,55 @@ class saunaView extends WatchUi.View {
 
         // 2) phase time (hero) to the LEFT of the lens, with total time
         //    (or the start prompt) stacked underneath it.
-        var totalMs = activityTimerMs(info);
-        var phaseMs = totalMs - _activity.getRoundStartMs();
+        var totalMs = (state == STATE_STOPPED) ? 0 : activityTimerMs(info);
+        var phaseMs = (state == STATE_STOPPED) ? 0 : totalMs - _activity.getRoundStartMs();
         if (phaseMs < 0) { phaseMs = 0; }
         var heroCx = subX / 2;
         dc.setColor(
-            state == STATE_PAUSED ? Graphics.COLOR_YELLOW : Graphics.COLOR_WHITE,
+            DisplayUtils.fgColor(state == STATE_PAUSED ? Graphics.COLOR_YELLOW : Graphics.COLOR_WHITE),
             Graphics.COLOR_TRANSPARENT
         );
-        drawCentered(dc, heroCx, subY + subH * 0.37,
+        DisplayUtils.drawCentered(dc, heroCx, subY + subH * 0.37,
             Graphics.FONT_NUMBER_MEDIUM, formatTime(phaseMs));
 
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        drawCentered(dc, heroCx, subY + subH * 0.82, Graphics.FONT_XTINY,
+        dc.setColor(DisplayUtils.fgColor(Graphics.COLOR_LT_GRAY), Graphics.COLOR_TRANSPARENT);
+        DisplayUtils.drawCentered(dc, heroCx, subY + subH * 0.82, Graphics.FONT_XTINY,
             state == STATE_STOPPED ? "Press START" : "total " + formatTime(totalMs));
 
         // 3) everything else fills the full-width area below the lens
         var cx = w / 2;
-        var lx = w * 0.28;
-        var rx = w * 0.72;
+        var lx = (w * 28) / 100;
+        var rx = (w * 72) / 100;
         var top = subY + subH + 6;
         var area = h - top;
 
         drawHrTempRow(dc, lx, rx, top + area * 0.18, info);
-        drawCalCountsRow(dc, lx, rx, top + area * 0.50, info);
+        drawCalCountsRow(dc, lx, rx, top + area * 0.50, state, info);
 
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        drawCentered(dc, cx, top + area * 0.82, Graphics.FONT_SMALL, formatClock());
+        dc.setColor(DisplayUtils.fgColor(Graphics.COLOR_LT_GRAY), Graphics.COLOR_TRANSPARENT);
+        DisplayUtils.drawCentered(dc, cx, top + area * 0.82, Graphics.FONT_SMALL, formatClock());
     }
 
     // --- Shared rows ---
     private function drawHrTempRow(dc as Dc, lx as Numeric, rx as Numeric, y as Numeric, info as Activity.Info?) as Void {
-        var hr = (info != null && info.currentHeartRate != null) ? (info.currentHeartRate as Number).toString() : "--";
-        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-        drawCentered(dc, lx, y, Graphics.FONT_SMALL, "HR " + hr);
+        var hrVal = _activity.getCurrentHeartRate(info);
+        var hr = (hrVal != null) ? hrVal.toString() : "--";
+        dc.setColor(DisplayUtils.fgColor(Graphics.COLOR_RED), Graphics.COLOR_TRANSPARENT);
+        DisplayUtils.drawCentered(dc, lx, y, Graphics.FONT_SMALL, "HR " + hr);
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        drawCentered(dc, rx, y, Graphics.FONT_SMALL, tempText());
+        DisplayUtils.drawCentered(dc, rx, y, Graphics.FONT_SMALL, tempText());
     }
 
-    private function drawCalCountsRow(dc as Dc, lx as Numeric, rx as Numeric, y as Numeric, info as Activity.Info?) as Void {
-        var cal = (info != null && info.calories != null) ? (info.calories as Number).toString() : "--";
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        drawCentered(dc, lx, y, Graphics.FONT_SMALL, cal + " kcal");
-        drawCentered(dc, rx, y, Graphics.FONT_SMALL,
+    private function drawCalCountsRow(
+        dc as Dc, lx as Numeric, rx as Numeric, y as Numeric,
+        state as SaunaState, info as Activity.Info?
+    ) as Void {
+        var cal = (state != STATE_STOPPED && info != null && info.calories != null)
+            ? (info.calories as Number).toString()
+            : "--";
+        dc.setColor(DisplayUtils.fgColor(Graphics.COLOR_LT_GRAY), Graphics.COLOR_TRANSPARENT);
+        DisplayUtils.drawCentered(dc, lx, y, Graphics.FONT_SMALL, cal + " kcal");
+        DisplayUtils.drawCentered(dc, rx, y, Graphics.FONT_SMALL,
             "S" + _activity.getSaunaCount().toString() + " R" + _activity.getRelaxCount().toString());
     }
 
@@ -187,7 +206,7 @@ class saunaView extends WatchUi.View {
 
     // Filled right-pointing triangle — "ready / press start".
     private function drawPlayIcon(dc as Dc, cx as Number, cy as Number) as Void {
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(DisplayUtils.fgColor(Graphics.COLOR_LT_GRAY), Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon([
             [cx - 10, cy - 14],
             [cx - 10, cy + 14],
@@ -197,14 +216,14 @@ class saunaView extends WatchUi.View {
 
     // Two vertical bars — "paused".
     private function drawPauseIcon(dc as Dc, cx as Number, cy as Number) as Void {
-        dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(DisplayUtils.fgColor(Graphics.COLOR_YELLOW), Graphics.COLOR_TRANSPARENT);
         dc.fillRectangle(cx - 10, cy - 14, 6, 28);
         dc.fillRectangle(cx + 4, cy - 14, 6, 28);
     }
 
     // Teardrop flame — "SAUNA / hot".
     private function drawFlameIcon(dc as Dc, cx as Number, cy as Number) as Void {
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(DisplayUtils.fgColor(Graphics.COLOR_ORANGE), Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon([
             [cx,      cy - 18],
             [cx + 6,  cy - 8],
@@ -219,24 +238,12 @@ class saunaView extends WatchUi.View {
 
     // Big "Z" — "RELAX / rest".
     private function drawZzzIcon(dc as Dc, cx as Number, cy as Number) as Void {
-        dc.setColor(Graphics.COLOR_BLUE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(DisplayUtils.fgColor(Graphics.COLOR_BLUE), Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(4);
         dc.drawLine(cx - 12, cy - 10, cx + 12, cy - 10); // top bar
         dc.drawLine(cx + 12, cy - 10, cx - 12, cy + 10); // diagonal
         dc.drawLine(cx - 12, cy + 10, cx + 12, cy + 10); // bottom bar
         dc.setPenWidth(1);
-    }
-
-    // Returns the sub-display rectangle, or null on watches without one.
-    private function findSubscreen() as Graphics.BoundingBox? {
-        if (WatchUi has :getSubscreen) {
-            var sub = WatchUi.getSubscreen();
-            if (sub != null && sub.x != null && sub.y != null
-                    && sub.width != null && sub.height != null) {
-                return sub;
-            }
-        }
-        return null;
     }
 
     private function tempText() as String {
@@ -250,15 +257,9 @@ class saunaView extends WatchUi.View {
         return c.format("%.0f") + "°C";
     }
 
-    private function drawCentered(dc as Dc, x as Numeric, y as Numeric, font as Graphics.FontType, text as String) as Void {
-        dc.drawText(x, y, font, text, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-    }
-
     private function activityTimerMs(info as Activity.Info?) as Number {
-        if (info != null && info.timerTime != null) {
-            return info.timerTime;
-        }
-        return 0;
+        var t = (info != null) ? info.timerTime : null;
+        return (t != null) ? t : 0;
     }
 
     // Format milliseconds as M:SS, or H:MM:SS once past an hour.

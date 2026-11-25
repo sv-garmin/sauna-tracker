@@ -28,7 +28,12 @@ Everything is shown on one screen, no paging:
 
 On Instinct watches the current phase is drawn as an icon inside the sub-display lens (a flame for SAUNA, a "Z" for RELAX, "||" for PAUSED, a play triangle for READY) instead of the SAUNA / RELAX label, and the phase timer sits to the left of the lens. Everything else is the same.
 
-SETTINGS / ABOUT
-Long-press MENU when no session is recording to open the Settings menu. Today it has one entry, About, which shows the app version and a QR code linking to the source repository.
+SETTINGS
+Long-press MENU when no session is recording to open Settings:
+  - Vibration: turn haptic feedback on or off (also respects the watch's system vibration setting).
+  - About: app version and a QR code linking to the source repository.
+
+WATCH SOUNDS NOTE
+Sauna Tracker never plays audio tones. Any beeps you hear come from the watch firmware (button key tones, activity tones, or notifications). Garmin Connect IQ does not allow apps to mute watch sounds or toggle Do Not Disturb — turn on Do Not Disturb from your watch's Controls menu (or disable key/alert tones in watch settings) before entering the sauna.
 
 Open source, MIT licensed: https://github.com/sv-garmin/sauna-tracker
